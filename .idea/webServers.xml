@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="9cad4873-c787-4c99-acc9-03f9d3990560" name="wpi-turing">
+        <fileTransfer rootFolder="/home/hmpatel" accessType="SFTP" host="turing.wpi.edu" port="22" sshConfigId="41f499be-fe9e-49a6-860f-5413e4182d15" sshConfig="hmpatel@turing.wpi.edu:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
