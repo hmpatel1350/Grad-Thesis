@@ -26,8 +26,8 @@ def read_data():
     paths_0 = []
     paths_1 = []
     for i in range(63):
-        path_0 = torch.load(f"../Data/transformers_layers_0_input_output/transformer_layer_0_inputs_batch_{i}.pt")
-        path_1 = torch.load(f"../Data/transformers_layers_0_input_output/transformer_layer_0_outputs_batch_{i}.pt")
+        path_0 = torch.load(f"J:/PyCharmData/inn_sequence/data/2024-09-07_18-04-35/transformer_layer_0_inputs_batch_{i}.pt")
+        path_1 = torch.load(f"J:/PyCharmData/inn_sequence/data/2024-09-07_18-04-35/transformer_layer_0_outputs_batch_{i}.pt")
         paths_0.append(path_0)
         paths_1.append(path_1)
 
@@ -110,43 +110,47 @@ for epoch in range(config['epochs']):
         # a 2 dimension list of m by n of None values
         # this will be used to store the hidden states
         H = [[None for _ in range(path_length)] for _ in range(iterations)]
-        start_gpu = time.time()
         for j in range(path_length):
             for i in range(iterations):
                 if i == 0:
-                    h_i = torch.zeros(P0.shape[0], h_size).to(accelerator.device)
+                    h_i = torch.zeros(P0.shape[0], h_size, device=accelerator.device)
                 else:
                     h_i = H[i-1][j]
                 if j == 0:
-                    h_j = torch.zeros(P0.shape[0], h_size).to(accelerator.device)
+                    h_j = torch.zeros(P0.shape[0], h_size, device=accelerator.device)
                 else:
                     h_j = H[i][j-1]
+                start_gpu = time.time()
                 out, h = model(P0[:, j], h_i, h_j)
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
                 H[i][j] = h
                 loss += loss_fn(out, P1[:, j])
-        end_gpu = time.time()
-        only_gpu += (end_gpu - start_gpu)
+
         wandb.log({'loss': loss})
         loss.backward()
         optimizer.step()
+print("Test1")
+
 end_time = time.time()
 elapsed_time = end_time - start_time
 
 P0 = paths_0['orig'].to(accelerator.device)
-P1 = torch.zeros_like(P0).to(accelerator.device)
+P1 = torch.zeros_like(P0, device=accelerator.device)
 H = [[None for _ in range(path_length)] for _ in range(iterations)]
 for j in range(path_length):
     for i in range(iterations):
         if i == 0:
-            h_i = torch.zeros(P0.shape[0], h_size).to(accelerator.device)
+            h_i = torch.zeros(P0.shape[0], h_size, device=accelerator.device)
         else:
             h_i = H[i-1][j]
         if j == 0:
-            h_j = torch.zeros(P0.shape[0], h_size).to(accelerator.device)
+            h_j = torch.zeros(P0.shape[0], h_size, device=accelerator.device)
         else:
             h_j = H[i][j-1]
         P1[:, j], h = model(P0[:, j], h_i, h_j)
         H[i][j] = h
+print("Test2")
 
 paths_1['fast_grid_pred'] = P1.detach().cpu()
 paths_1['fast_grid_pred_2d'] = paths_1['fast_grid_pred'] @ paths_1['2d_projector']
@@ -154,6 +158,7 @@ paths_1['fast_grid_pred_2d'] = paths_1['fast_grid_pred'] @ paths_1['2d_projector
 plot_path(paths_1['2d'][0], c='r')
 plot_path(paths_1['fast_grid_pred_2d'][0], c='y')
 plt.suptitle("Oringal path (red) and Grid prediction (yellow)")
-plt.title(f'Time to run: {elapsed_time}s\nTime in GPU: {only_gpu}s')
+plt.title(f'Time to Train: {elapsed_time}s Time Running Model: {only_gpu}s')
 plt.savefig("paths_comparison.png")
 wandb.log({"paths_comparison": wandb.Image("paths_comparison.png")})
+print("Test3")
