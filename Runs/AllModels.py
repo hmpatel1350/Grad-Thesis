@@ -182,33 +182,33 @@ increasedIterationsPred, increasedIterationsPred2D = increasedIterationsTraining
 
 path_diff = paths_1['orig'][0] - lstmPred[0]
 for i in range(63):
-    path_diff = path_diff + paths_1['orig'][i] - lstmPred[i]
-plt.plot(torch.norm(path_diff, dim=1), c='g', label='LSTM_pred')
+    path_diff = path_diff + paths_1['orig'][i+1] - lstmPred[i+1]
+plt.plot(torch.norm(path_diff / 64.0, dim=1), c='g', label='LSTM_pred')
 
 path_diff = paths_1['orig'][0] - gruPred[0]
 for i in range(63):
-    path_diff = path_diff + paths_1['orig'][i] - gruPred[i]
-plt.plot(torch.norm(path_diff, dim=1), c='b', label='GRU_pred')
+    path_diff = path_diff + paths_1['orig'][i+1]- gruPred[i+1]
+plt.plot(torch.norm(path_diff / 64.0, dim=1), c='b', label='GRU_pred')
 
 path_diff = paths_1['orig'][0] - baseDynamicalPred[0]
 for i in range(63):
     path_diff = path_diff + paths_1['orig'][i+1] - baseDynamicalPred[i+1]
-plt.plot(torch.norm(path_diff, dim=1), c='m', label='BaseDynamical_pred')
+plt.plot(torch.norm(path_diff / 64.0, dim=1), c='m', label='BaseDynamical_pred')
 
 path_diff = paths_1['orig'][0] - cachedDynamicalPred[0]
 for i in range(63):
     path_diff = path_diff + paths_1['orig'][i+1] - cachedDynamicalPred[i+1]
-plt.plot(torch.norm(path_diff, dim=1), c='c', label='CachedDynamical_pred')
+plt.plot(torch.norm(path_diff / 64.0, dim=1), c='c', label='CachedDynamical_pred')
 
 path_diff = paths_1['orig'][0] - increasedIterationsPred[0]
 for i in range(63):
     path_diff = path_diff + paths_1['orig'][i+1] - increasedIterationsPred[i+1]
-plt.plot(torch.norm(path_diff, dim=1), c='y', label='IncreasedIterations_pred')
+plt.plot(torch.norm(path_diff / 64.0, dim=1), c='y', label='IncreasedIterations_pred')
 
 path_diff = paths_1['orig'][0]-falconLayer0Pred[0]
 for i in range(63):
     path_diff = path_diff + paths_1['orig'][i+1] - falconLayer0Pred[i+1]
-plt.plot(torch.norm(path_diff, dim=1), c='r', label='FalconLayer0_pred')
+plt.plot(torch.norm(path_diff / 64.0, dim=1), c='r', label='FalconLayer0_pred')
 
 plt.legend()
 plt.title("Error in prediction full dimension")

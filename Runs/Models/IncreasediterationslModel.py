@@ -8,7 +8,7 @@ class IncreasedIterationsModel(DynamicalSystemModel):
     def train(self):
         only_gpu = 0.0
         start_time = time.time()
-
+        change = self.config['epochs'] / self.iterations
         H_cache = []
 
         # We pad H with zeros when i or j are out of bounds
@@ -35,13 +35,13 @@ class IncreasedIterationsModel(DynamicalSystemModel):
 
                 zeros_i = torch.zeros(H_old.shape[0], 1, H_old.shape[2], H_old.shape[3], device=self.accelerator.device)
                 H_i = torch.cat((zeros_i, H_old), dim=1)
-                if (epoch % 25 != 0 or epoch == 0):
+                if (epoch % change != 0 or epoch == 0):
                     H_i = H_i[:, :-1, :, :]
 
                 zeros_j = torch.zeros(H_old.shape[0], H_old.shape[1], 1, H_old.shape[3], device=self.accelerator.device)
                 H_j = torch.cat((zeros_j, H_old), dim=2)
                 H_j = H_j[:, :, :-1, :]
-                if (epoch % 25 == 0 and epoch != 0):
+                if (epoch % change == 0 and epoch != 0):
                     H_j = torch.cat((H_j, zeros_i), dim=1)
 
                 P0_reshaped = P0_repeated.reshape(-1, self.data_dimension)
