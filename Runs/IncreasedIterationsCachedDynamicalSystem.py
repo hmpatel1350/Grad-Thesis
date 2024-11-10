@@ -25,8 +25,8 @@ def read_data():
     paths_0 = []
     paths_1 = []
     for i in range(63):
-        path_0 = torch.load(f"J:/PyCharmData/inn_sequence/data/2024-09-07_18-04-35/transformer_layer_0_inputs_batch_{i}.pt")
-        path_1 = torch.load(f"J:/PyCharmData/inn_sequence/data/2024-09-07_18-04-35/transformer_layer_0_outputs_batch_{i}.pt")
+        path_0 = torch.load(f"../Data/transformers_layers_0_input_output/transformer_layer_0_inputs_batch_{i}.pt")
+        path_1 = torch.load(f"../Data/transformers_layers_0_input_output/transformer_layer_0_outputs_batch_{i}.pt")
         paths_0.append(path_0)
         paths_1.append(path_1)
 
@@ -64,7 +64,7 @@ paths_1['2d'] = paths_1['orig'] @ paths_1['2d_projector']
 run = wandb.init(
     # Set the project where this run will be logged
     project="Graduate-Thesis",
-    name = "Increased Iterations"
+    name = "AutoencoderIncreasedIterations"
 )
 
 dataset = TensorDataset(paths_0['orig'], paths_1['orig'])
@@ -93,7 +93,49 @@ class GridModel(torch.nn.Module):
         out = self.model(z)
         return out[:, :self.data_dimension], out[:, self.data_dimension:]
 
-model = GridModel(data_dimension, h_size, hidden_size)
+import torch.nn as nn
+class GRUModel(nn.Module):
+    def __init__(self, data_dimension, h_size, num_layers=4):
+        super(GRUModel, self).__init__()
+        self.data_dimension = data_dimension
+        self.h_size = h_size
+        self.gru = nn.GRU(data_dimension, 2*self.h_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(2*self.h_size, data_dimension+self.h_size)
+
+    def forward(self, P0, hi, hj):
+        print(P0.shape)
+        print(hi.shape)
+        print(hj.shape)
+        h0 = torch.cat([hi, hj], dim=-1)
+        h0 = torch.tile(h0, (self.num_layers, 1, 1))
+        out, _ = self.gru(P0, h0)
+        out = self.fc(out[:, -1, :])
+        return out[:, :self.data_dimension], out[:, self.data_dimension:]
+#model = GridModel(data_dimension, h_size, hidden_size)
+
+
+class Autoencoder(nn.Module):
+    def __init__(self, data_dimension, h_size):
+        super(Autoencoder, self).__init__()
+        self.data_dimension = data_dimension
+        self.h_size = h_size
+        self.model = torch.nn.Sequential(torch.nn.Linear(in_features=self.data_dimension+2*self.h_size, out_features=1024),
+                                         torch.nn.GELU(),
+                                         torch.nn.Linear(in_features=1024,
+                                                         out_features=512),
+                                         torch.nn.ReLU(),
+                                         torch.nn.Linear(in_features=512,
+                                                         out_features=1024),
+                                         torch.nn.GELU(),
+                                         torch.nn.Linear(in_features=1024, out_features=self.data_dimension+self.h_size))
+    def forward(self, P0, h_i, h_j):
+        z = torch.cat([P0, h_i, h_j], dim=-1)
+        out = self.model(z)
+        return out[:, :self.data_dimension], out[:, self.data_dimension:]
+
+model = Autoencoder(data_dimension, h_size)
+#model = GridModel(data_dimension, h_size, hidden_size)
+
 # Train the model
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = torch.nn.MSELoss()

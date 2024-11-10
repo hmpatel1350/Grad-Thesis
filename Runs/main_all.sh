@@ -3,8 +3,8 @@
 #SBATCH -n 1
 #SBATCH -p short
 #SBATCH --gres=gpu:1
-#SBATCH -J "RegularDynamicalSystem.py"
-#SBATCH -C A100|V100
+#SBATCH -J "AllModelsV100.py"
+#SBATCH -C V100
 module load cuda
 source ../venv/bin/activate
-python ./RegularDynamicalSystem.py
+python ./AllModels.py
