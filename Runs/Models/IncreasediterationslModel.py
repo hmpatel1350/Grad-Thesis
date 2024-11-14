@@ -23,7 +23,11 @@ class IncreasedIterationsModel(DynamicalSystemModel):
                 P0_repeated = P0.unsqueeze(1).repeat(1, iterations_now, 1, 1)
                 P1_repeated = P1.unsqueeze(1).repeat(1, iterations_now, 1, 1)
 
+                start_gpu = time.time()
                 self.optimizer.zero_grad()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
+
                 loss = 0.0
                 # a 2 dimension list of m by n of None values
                 # this will be used to store the hidden states
@@ -61,8 +65,12 @@ class IncreasedIterationsModel(DynamicalSystemModel):
                     loss += (i + 1) * self.loss_fn(out_reshaped[:, i, :, :], P1_repeated[:, i, :, :])
 
                 self.wandb_run.log({f'{self.name}_loss': loss})
+
+                start_gpu = time.time()
                 loss.backward()
                 self.optimizer.step()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
 
                 H_cache[batch_idx] = h.reshape(P0.shape[0], iterations_now, self.path_length, self.h_size).detach()
 

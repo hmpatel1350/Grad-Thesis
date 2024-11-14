@@ -22,7 +22,11 @@ class CachedDynamicalSystemModel(DynamicalSystemModel):
                 P0_repeated = P0.unsqueeze(1).repeat(1, self.iterations, 1, 1)
                 P1_repeated = P1.unsqueeze(1).repeat(1, self.iterations, 1, 1)
 
+                start_gpu = time.time()
                 self.optimizer.zero_grad()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
+
                 loss = 0.0
                 # a 2 dimension list of m by n of None values
                 # this will be used to store the hidden states
@@ -54,8 +58,12 @@ class CachedDynamicalSystemModel(DynamicalSystemModel):
 
                 loss = self.loss_fn(out_reshaped, P1_repeated)
                 self.wandb_run.log({f'{self.name}_loss': loss})
+
+                start_gpu = time.time()
                 loss.backward()
                 self.optimizer.step()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
 
                 H_cache[batch_idx] = h.reshape(P0.shape[0], self.iterations, self.path_length, self.h_size).detach()
 

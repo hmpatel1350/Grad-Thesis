@@ -13,7 +13,11 @@ class DynamicalSystemModel(BaseModelInterface):
         start_time = time.time()
         for epoch in range(self.config['epochs']):
             for (P0, P1, attention_mask) in self.dataloader:
+                start_gpu = time.time()
                 self.optimizer.zero_grad()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
+
                 loss = 0.0
                 # a 2 dimension list of m by n of None values
                 # this will be used to store the hidden states
@@ -37,8 +41,13 @@ class DynamicalSystemModel(BaseModelInterface):
                         H[i][j] = h
                         loss += self.loss_fn(out, P1[:, j])
                 self.wandb_run.log({f'{self.name}_loss': loss})
+
+                start_gpu = time.time()
                 loss.backward()
                 self.optimizer.step()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
+
         end_time = time.time()
         elapsed_time = end_time - start_time
         self.elapsed_time = elapsed_time

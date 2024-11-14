@@ -31,7 +31,10 @@ class BaseModelInterface:
         start_time = time.time()
         for epoch in range(self.config['epochs']):
             for i, (start, end, attention_mask) in enumerate(self.dataloader):
+                start_gpu = time.time()
                 self.optimizer.zero_grad()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
 
                 start_gpu = time.time()
                 out = self.model(start)
@@ -39,9 +42,13 @@ class BaseModelInterface:
                 only_gpu += (end_gpu - start_gpu)
 
                 loss = self.loss_fn(out, end)
-                loss.backward()
                 self.wandb_run.log({f'{self.name}_loss': loss})
+
+                start_gpu = time.time()
+                loss.backward()
                 self.optimizer.step()
+                end_gpu = time.time()
+                only_gpu += (end_gpu - start_gpu)
         end_time = time.time()
         elapsed_time = end_time - start_time
         self.elapsed_time = elapsed_time

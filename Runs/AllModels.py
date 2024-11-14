@@ -101,6 +101,7 @@ loss_fn = torch.nn.MSELoss()
 falconConfig = FalconConfig(hidden_size=2048, ffn_hidden_size=8192, num_attention_heads=1, parallel_attn=False, alibi=False)
 falconLayer = FalconDecoderLayer(config=falconConfig)
 print(f'falconLayer\n{falconLayer}')
+
 falconLayer0Model = torch.load("./Models/transformer_layer_0.pt")
 print(f'falconLayer0Model\n{falconLayer0Model}')
 falconLayer0Optimizer = torch.optim.Adam(falconLayer.parameters(), lr=1e-4)
